@@ -1,108 +1,105 @@
+//          _____                     _____                     _____                     _____          
+//         /\    \                   /\    \                   /\    \                   /\    \         
+//        /::\____\                 /::\    \                 /::\    \                 /::\    \        
+//       /::::|   |                /::::\    \                \:::\    \               /::::\    \       
+//      /:::::|   |               /::::::\    \                \:::\    \             /::::::\    \      
+//     /::::::|   |              /:::/\:::\    \                \:::\    \           /:::/\:::\    \     
+//    /:::/|::|   |             /:::/__\:::\    \                \:::\    \         /:::/__\:::\    \    
+//   /:::/ |::|   |            /::::\   \:::\    \                \:::\    \       /::::\   \:::\    \   
+//  /:::/  |::|___|______     /::::::\   \:::\    \                \:::\    \     /::::::\   \:::\    \  
+// /:::/   |::::::::\    \   /:::/\:::\   \:::\    \                \:::\    \   /:::/\:::\   \:::\    \ 
+///:::/    |:::::::::\____\ /:::/  \:::\   \:::\____\ _______________\:::\____\ /:::/__\:::\   \:::\____\
+//\::/    / ~~~~~/:::/    / \::/    \:::\  /:::/    / \::::::::::::::::::/    / \:::\   \:::\   \::/    /
+// \/____/      /:::/    /   \/____/ \:::\/:::/    /   \::::::::::::::::/____/   \:::\   \:::\   \/____/ 
+//             /:::/    /             \::::::/    /     \:::\~~~~\~~~~~~          \:::\   \:::\    \     
+//            /:::/    /               \::::/    /       \:::\    \                \:::\   \:::\____\    
+//           /:::/    /                /:::/    /         \:::\    \                \:::\   \::/    /    
+//          /:::/    /                /:::/    /           \:::\    \                \:::\   \/____/     
+//         /:::/    /                /:::/    /             \:::\    \                \:::\    \         
+//        /:::/    /                /:::/    /               \:::\____\                \:::\____\        
+//        \::/    /                 \::/    /                 \::/    /                 \::/    /        
+//         \/____/                   \/____/                   \/____/                   \/____/         
+//                                                                                                   
+
+
 /////////////////////////////////////////////////////////////////////////////
 // 3D Maze
 // Laura Byrnes-Blanco and Brian Wright
 // University of South Florida
 // EML4593 Haptics
 // Dr. Kyle Reed
-// Updated April 22, 2014
+// Updated April 28, 2014
 //////////////////////////////////////////////////////////////////////////////
+//c  C++ HEADERS                                     
+
+#include <QHHeadersWin32.h>
+#include <HDU/hduMath.h>
+#include <HDU/hduMatrix.h>
+#include <fstream>  // ofstream
+#include <io.h>
+#include <iomanip>  // setw
+#include <iostream> // cout, endl
+#include <sstream>
+#include <string.h>
+using namespace std;
+
+//c  ****  VARIABLES  *******
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+HDstring strongHand = "Left";
+HDstring weakHand = "Right";
+HDstring fileName = "dataTEST.txt";
+bool ignoreFileExists = true;
+const int feedbackMethod = 1; // 0 = none, 1 = force, 2 = position, 3 = thermal, 4 = single vibrotactile
+const double mirror=0;
+const int impulseRate = 1; // Hertz
+const int impulsePercentOfCycle = 25; // 0 to 100
+const int impulseDistance = 25; // mm
+const double kOn = 0.070; // spring const, N/mm
+const double kOff = 0.035; // spring const, N/mm
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
+//////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////
 // Experimental Demo
 //////////////////////////////////////////////////////////////////////////////
 
-//////////////////
-//     TODO     //
-//////////////////////////////////////////////////////////////////////////////
-//
-// CODE IS IN THE PROCESS OF BEING REWRITTEN USING PSEUDOCODE TEMPLATE!
-// SEARCH FOR "NEW BEGINNING".
-//
-//  Link program to external sensors/actuators
-//    Phidgets
-//      * Library linked
-//      * Need to output to Peltier
-//         - Op amp / power amp
-//         - Wires
-//         - Power source
-//      * Holder for plates e.g. glove pockets
-//
-//    Arduino as an alternative?? (It looks like Serial In/Out can be used on Arduino from VS... somehow.)
-//
-//  Is gimbal position important?
-//  ...Useful to change properties (lighting, friction) based on X/Y/Z angle?
-//
-//  Accurate Stopwatch (link to Servo callback)
-//STOPWATCH HACK IN PLACE
-//    Alternate: gradually fill progress bar (color change, finish line, etc)
-//
-//  Tweak Right Camera
-//MOSTLY DONE (Better view possible?)
-//
-//  Implement Bimanual
-//PARTIALLY COMPLETE
-//
-//  Hint Force e.g. solve automatically
-//BASIC ROUTINE IMPLEMENTED
-//    Center on final box
-//    Center on normal area of box while in motion?
-//    Link to Stylus Button 2 ?
-//    Restore weightless force after hint force (marked "TODO")
-//    Optimize for bimanual e.g. make left omni provide feedback to guide right
-//
-//  Stylus Button 1 to Open All Walls->Return to Start Point->Close Walls
-//    Center on beginning box
-//    Alternately, make button begin timer
-//
-//  Add data metrics
-//DONE    Routine to write to raw file
-//DONE    * Fine path tracing (20 divisions per block)
-//    * Total number of backtracks
-//    * Percentage of time in contact with walls
-//    * Feedback vs no feedback
-//    * Bimanual ??
-//    * ??
-//
-//  Change project file names and folders to accurate titles (e.g. not SpongyCow)
-//DONE
-//
-//  Fix erratic jerking/vibrations (worst at corners farthest from Omni)
-//    -> ONLY ONE OMNI HAS VIBRATION PROBLEMS
-//       - Possibly use problematic omni as the guidance omni and other as the navigating omni
-//       - If other is used for guidance, do we need to have it also in the maze boundaries?
-//       - Omni 2 can apply a left force, making the user push right to keep motionless,
-//         but pushing right on both Omnis could keep the guidance once motionless while the right moves thru maze.
-//    * Chamfers - make problem worse!
-//    * Change virtual object location - sufficient (moved dir[1] negative 40)
-//    * Enable popthru and inward force if out of bounds - untested
-//    * Smaller outer box dimensions (overlap) - ineffective
-//    * ??
-//
-//////////////////////////////////////////////////////////////////////////////
 
+int dataStage = -5; // -5 = pretrial, 0 = start cell, 1 = recording, 2+ = finish line
+int trialTimer = 0;
+int signTimer = 1;
+int impulseTimer = 0;
+int impulsePeriod = (1000/(double)impulseRate);
+int impulseOnPeriod = impulsePeriod*((double)impulsePercentOfCycle/100);
+int impulseOffPeriod = impulsePeriod - impulseOnPeriod;
+int minDTF = 36;
+int word = -1;  // current distance to finish (DTF)
+int baddata = 0;
 
-/* *************************************************** */
-/* *************************************************** */
-// FULL REWRITE UNTIL "NEW CODE ENDS" (NEW BEGINNING)
-/* 3D MAZE PSEUDOCODE IS DENOTED BY //c AT THE BEGINNING OF EACH LINE */
-/* *************************************************** */
-/* *************************************************** */
-//c  C++ HEADERS
-//#include <phidget21.h>
-#include <QHHeadersWin32.h>
-//#include <iostream>
-//#include <iomanip>
-//#include <fstream>
-//#include <sstream>
-//#include <string.h>
-//#include <math.h>
+class DataTransportClass//This class carried data into the ServoLoop thread
+{
+public:
+	TriMesh* Model;//Trimesh pointer to hold mesh data
+	Sphere* cursorSphere;//Sphere pointer. for the Sphere which replaces the cursor in this demo
+	Cylinder* forceArrow;//The bar on the Sphere showing the magnitude and direction of force generated
+    Cone* forceArrowTip;// The bar tip that points in the force direction.
+	Cursor* deviceCursor;//Pointer to hold the cursor data
+	Cursor* deviceCursor2;//Pointer to hold the cursor data
+    Text* descriptionText;
+};
 
-//c  **  VARIABLES  ****************************************************
-//c  DETERMINE WHETHER RIGHT OR LEFT IS STRONG (DOMINANT HAND)
-HDstring stronghand = "right";
-HDstring weakhand = "left";
-void MotionCallback(unsigned int ShapeID);
+//c  OPEN FILE TO RECORD DATA
 
+hduMatrix WorldToDevice;//This matrix contains the World Space to DeviceSpace Transformation
+hduVector3Dd forceVec;//This variable contains the force vector.
+
+void GraphicsCallback(void);//Graphics callback routine
+void HLCALLBACK computeForceCB(HDdouble force[3], HLcache *cache, void *userdata);//Servo loop callback
+void HLCALLBACK startEffectCB(HLcache *cache, void *userdata);//Servo Loop callback
+void HLCALLBACK stopEffectCB(HLcache *cache, void *userdata);//Servo Loop callback
+hduVector3Dd forceField(hduVector3Dd Pos1, hduVector3Dd Pos2, HDdouble Multiplier, HLdouble Radius);//This function computer the force beween the Model and the particle based on the positions
+std::ofstream myFile;
 //c  *******************************************************************
 
 //c  MAIN ROUTINE
@@ -112,106 +109,26 @@ int WINAPI WinMain(	HINSTANCE	hInstance,				// Instance
 			int		nCmdShow)				// Window Show State
 {
 
-    
+//	interfacekit_simple();
+//	return 0;
 
-//    Cursor* OmniCursor = new Cursor;//Create a cursor
-//    DisplayObject->tell(OmniCursor);//Tell QuickHaptics that a cursor exists
+//c  CHECK TO SEE IF FILE ALREADY EXISTS BEFORE OPENING
+	if (ignoreFileExists == false) {
+		if(_access(fileName, 0) != -1)
+		{
+			MessageBox(NULL, L"Data File Already Exists", L"Error!", MB_OK);
+			return 0; // END DEBUG
+		}
+	}
+  myFile.open (fileName, std::ofstream::out);
 
 //c  INITIALIZE HAPTIC ENVIRONMENT
-QHWin32* DisplayObject = new QHWin32;
+	QHWin32* DisplayObject = new QHWin32;//create a display window
+	DataTransportClass dataObject;//Initialize an Object to transport data into the servoloop callback
+	DisplayObject->hapticWindow(true);
+    DisplayObject->setWindowTitle("Front View\0");
 
-//c  INITIALIZE STRONG OMNI
-DeviceSpace* OmniStrong = new DeviceSpace(stronghand);
-DeviceSpace* OmniWeak = new DeviceSpace(weakhand);
-
-//c  PLACE STRONG OMNI IN SCENE
-//DisplayObject->tell(OmniStrong);
-
-//c TRAINING:
-//c  CREATE A BOX FOR L-R
-Box* SimpleBox = new Box(140, 20, 20, 0, 0, 0);
-SimpleBox->setTouchableFace("back");
-DisplayObject->tell(SimpleBox);
-//c  DRAG OMNI INTO BOX
-//c  LET USER EXPLORE
-//c  CHANGE TO BOX Up-Down
-//c  CHANGE TO BOX In-Out
-//c  CLEAR SCENE
-//c  INITIALIZE MAZE SCENE
-//c LOOPBACK:
-//c  DEACTIVATE WALLS
-//c  FORCED MOVE TO STARTCELL
-//c  ACTIVATE WALLS
-//c  INITIALIZE WEAK OMNI
-//DeviceSpace* OmniWeak = new DeviceSpace(weakhand);
-//c  IF (METHOD==POSITION) ATTACH WEAK OMNI TO SCENE
-////c Should the left be placed in the maze or do you think not linking it to the maze is best?
-////c I was thinking it might be easy to keep it locked in the maze for the position guided sequence so we can use the voxils as a road map. But then we'd have to chance the code or have another file for the force driven guidance...
-//c  INCREMENT FILE NUMBER -> (IF exists(n) THEN n++)
-//c  OPEN FILE TO RECORD DATA
-//c  START QUICKHAPTICS
-qhStart();
-SimpleBox->~Box();
-qhStart();
-//c  MAIN ROUTINE ENDS
-}
-
-//c  OnEvent ROUTINES:
-//c  BEGIN EXPERIMENT WHEN CELL != STARTCELL
-//c  ON SERVOLOOP() {
-//c   TRACK DTF  [DISTANCE TO FINISH]
-//c   RECORD DATA(T,X1,Y1,Z1,X2,Y2,Z2,CONTACT)
-////c What is CONTACT?
-//c   IF (DTF > MINDTF) CALL FEEDBACKWEAK
-//c   IF (DTF <= MINDTF && METHOD = TEMP) MAKE WARM
-//c   IF DTF = 1 EXIT LOOP
-//c   IF (METHOD = FORCE) CALL DRIFTBACK
-////c Should add another if statement for position guidance? (  IF (METHOD = POSITION) CALL DRIFTBACK  or something like: IF (DTF < MINDTF && METHOD = POSITION) CAL DRIFTBACK  )
-//c  }
-//c CLOSE DATA FILE
-//c GOTO LOOPBACK
-
-//c FEEDBACKWEAK = FUNCTION(METHOD) {
-//c  IF (METHOD = NONE) RETURN
-//c  TIMER TO APPLY FORCE EVERY X MILLISECONDS {
-//c   IF (METHOD = FORCE) LEFTFORCE = FORCE(X1,Y1,Z1), an array which has the direction to the next cell
-//c  }
-//c  IF (METHOD = TEMP) MAKE COLD 
-//c } 
-
-//c DRIFTBACK = FUNCTION() {
-//c  WEAKSIDEFORCE = K*(X2-X1, Y2-Y1, Z2-Z1)
-//c }
-//c NEW CODE ENDS *******************************************************************
-
-
-void MotionCallback(unsigned int ShapeID)
-{
-}
-
-
-/* BLOCK OLD
-
-//void MotionCallback(unsigned int ShapeID);
-void GraphicsCallback(void);
-
-int i = 0;
-bool hintsEnabled = false;
-bool twoOmnis = true;
-
-std::ofstream myFile;
-
-int WINAPI WinMain(	HINSTANCE	hInstance,				// Instance
-			HINSTANCE	hPrevInstance,				// Previous Instance
-			LPSTR		lpCmdLine,				// Command Line Parameters
-			int		nCmdShow)				// Window Show State
-{
-	
-	QHWin32* DisplayObject1 = new QHWin32;//create a display window
-    DisplayObject1->hapticWindow(true);//The haptics are with respect to this window
-    DisplayObject1->setWindowTitle("Front View\0");//make the title of this window "Front View"
-
-    QHWin32* DisplayObject2 = new QHWin32;//create a display window
+	QHWin32* DisplayObject2 = new QHWin32;//create a display window
     DisplayObject2->hapticWindow(false);//Disable haptics in this window
     DisplayObject2->setWindowTitle("Right View\0");//Set the title of this window as "Left View"
 
@@ -219,86 +136,88 @@ int WINAPI WinMain(	HINSTANCE	hInstance,				// Instance
     DisplayObject3->hapticWindow(false);//Disable Haptics in this window
     DisplayObject3->setWindowTitle("Top View\0");//Set the title of this window as "Top View"
 
-	//DeviceSpace* OmniSpace = new DeviceSpace();//Find the default Phantom device 
-    DeviceSpace* OmniSpace = new DeviceSpace("right");//Find the right Phantom device 
-	DisplayObject1->tell(OmniSpace);//Tell QuickHaptics about it
-	DeviceSpace* OmniSpace2;
-	if(twoOmnis){
-		OmniSpace2 = new DeviceSpace("left");//Find the left Phantom device 
-		DisplayObject1->tell(OmniSpace2);
-	}
-	
-	hduVector3Dd dirUp;
-	dirUp[0]=0.0;
-	dirUp[1]=1.0;
-	dirUp[2]=0.0;
-	OmniSpace->setConstantForce(dirUp,0.11); // Make weightless the Omni until hint force enabled, TODO
-	if(twoOmnis){
-		OmniSpace2->setConstantForce(dirUp,0.11); // Make weightless the Omni until hint force enabled, TODO
-	}
-	TriMesh* Maze = new TriMesh("models/Test2.3DS",1,0,-40,60);//Load a Maze model (Scale 1 LOC 0 -40 0)
-	Maze->setUnDraggable();
-	Maze->setName("Maze");//give it a name
-	Maze->setShapeColor(0,0.404,0.278);
-//	Maze->setPopthrough();
-	//    Maze->setTexture("models/cow.jpg");
-	
-	Maze->dynamic(false);//make the Maze deformable
-	Maze->setGravity(false);//Turn off gravity
-//	Maze->setFriction(0.0,0.0);//give friction to the Maze surface
-//	Maze->setSpringStiffness(0.5);//Parameters to play around with - Spring Stiffness
-//	Maze->setSpringDamping(0.5);//Parameters to play around with - Damping
-//	Maze->setMass(5);////Parameters to play around with - Mass of each particle
+//c  INITIALIZE BOTH OMNIS
+	DeviceSpace* OmniSpace = new DeviceSpace(strongHand);//Find the default Phantom Device
+	DeviceSpace* OmniSpace2 = new DeviceSpace(weakHand);//Find the other Phantom Device
+    DisplayObject->setName("GRACEFUL AMAZING");//Give the window a title
+//c  PLACE BOTH OMNIS IN SCENE
+    DisplayObject->tell(OmniSpace);//Tell quickHaptics about the device space object    
+    DisplayObject->tell(OmniSpace2);//Tell quickHaptics about the device space object    
 
-    DisplayObject1->tell(Maze);//Tell Quickhaptics about the Maze
+    dataObject.cursorSphere = new Sphere(3,15);//Initialise a Sphere
+	dataObject.cursorSphere->setName("cursorSphere");//Give it a name
+    dataObject.cursorSphere->setShapeColor(0.8,0.2,0.2);//Give it a color
+    dataObject.cursorSphere->setHapticVisibility(false);//Make the Sphere haptically invisible. this sphere replaces the cursor hence it must be haptically invisible or the proxy will keep colliding with the sphere
+    DisplayObject->tell(dataObject.cursorSphere);//Tell QuickHaptics
+    
+    dataObject.forceArrow = new Cylinder(0.75,1,15);//Initialise a cylinder
+    dataObject.forceArrow->setShapeColor(0.2,0.7,0.2);//Give it a color
+    dataObject.forceArrow->setHapticVisibility(false);//Make it haptictically invisible
+    dataObject.forceArrow->setName("forceArrow");//Give it a name
+    DisplayObject->tell(dataObject.forceArrow);//tell Quickhaptics
+        
+    dataObject.forceArrowTip = new Cone(2,4,15);//Initialise a cone
+    dataObject.forceArrowTip->setShapeColor(1.0,0.0,0.0);//Give it a color
+    dataObject.forceArrowTip->setHapticVisibility(false);//Make it haptictically invisible
+    dataObject.forceArrowTip->setName("forceArrowTip");//Give it a name
+    DisplayObject->tell(dataObject.forceArrowTip);//tell Quickhaptics
 
-//	Box* SimpleBox = new Box(138, 58, 98, 69, 1, -49); // DIM 140 60 100, LOC 70 30 -50
-	Box* SimpleBox = new Box(140, 60, 100, 70, -10, 10); // DIM 140 60 100, LOC 70 -10 -50
+    dataObject.Model = new TriMesh("Models/Test2.3DS");//Load a Skull  Model for the Mesh
+    dataObject.Model->setName("Maze");//Give it a name
+    dataObject.Model->setHapticVisibility(true);
+    dataObject.Model->setGraphicVisibility(true);
+	dataObject.Model->setShapeColor(0.5,0.5,0.5);//Make to color of the skull purple
+//	dataObject.Model->setTexture("Models/cow.jpg");
+	dataObject.Model->setScale( 1.0 ); // make the skull smaller, about the same size as the sphere
+	dataObject.Model->setTouchableFace("front");
+	dataObject.Model->setUnDraggable();
+    DisplayObject->tell(dataObject.Model);//Tell QuickHaptics about it.
+
+	Box* SimpleBox = new Box(140, 60, 100, 70, 30, -50); // DIM 140 60 100, LOC 70 -10 -50
 	SimpleBox->setName("WOO");
 	SimpleBox->setUnDraggable();
 //    SimpleBox->setTexture("models/cow.jpg");
 	SimpleBox->setTouchableFace("back");
+	SimpleBox->setHapticVisibility(true);
 	SimpleBox->setGraphicVisibility(false);
 //	SimpleBox->setPopthrough();
-	DisplayObject1->tell(SimpleBox);
+	DisplayObject->tell(SimpleBox);
 
-    Text* descriptionText1 = new Text(18.0, "3D Maze", 0.2,0.9);
-    descriptionText1->setName("TitleBox");
-    descriptionText1->setShapeColor(0.0,0.0,0.0);
-    DisplayObject1->tell(descriptionText1);
+    dataObject.deviceCursor= new Cursor();//Get a new cursor
+    dataObject.deviceCursor->setName("devCursor");//Give it a name
+    dataObject.deviceCursor->setCursorGraphicallyVisible(false);//Make it graphically invisible
+    DisplayObject->tell(dataObject.deviceCursor);//Tell Quickhaptics about it.
+
+    dataObject.deviceCursor2 = new Cursor();//Get a new cursor
+    dataObject.deviceCursor2->setName("devCursor2");//Give it a name
+    dataObject.deviceCursor2->setCursorGraphicallyVisible(true);//Make it graphically invisible
+    DisplayObject->tell(dataObject.deviceCursor2);//Tell Quickhaptics about it.
+
+    dataObject.descriptionText = new Text(20.0,"W",0.4,0.9);
+    dataObject.descriptionText->setName("TitleBox");
+    dataObject.descriptionText->setShapeColor(0.7,0.0,0.4);
+    DisplayObject->tell(dataObject.descriptionText);
+
     Text* descriptionText2 = new Text(20.0, "0 0 0 - 0", 0.4,0.85);
     descriptionText2->setName("TextBox");
     descriptionText2->setShapeColor(1.0,0.8,0.9);
-    DisplayObject1->tell(descriptionText2);
+    DisplayObject->tell(descriptionText2);
     Text* descriptionText3 = new Text(14.0, "000.0 ms", 0.4, 0.80);
 	descriptionText3->setName("TimerBox");
     descriptionText3->setShapeColor(1.0,0.8,0.9);
-    DisplayObject1->tell(descriptionText3);
+    DisplayObject->tell(descriptionText3);
 	Text* descriptionText4 = new Text(14.0, "Under Construction", 0.4,0.75);
     descriptionText4->setName("CommentBox");
     descriptionText4->setShapeColor(1.0,0.2,0.0);
-    DisplayObject1->tell(descriptionText4);
-    
-/*
-    Cursor* OmniCursor = new Cursor;//Declare a new cursor
-    OmniCursor->setName("OmniCursor");
-    DisplayObject1->tell(OmniCursor);//tell QuickHaptics about the cursor
-*/
-/* BLOCK OLD
-	Cursor* OmniCursor = new Cursor();//Declare a new cursor
-    Cursor* OmniCursor2;
-	OmniCursor->setName("OmniCursor");
-	DisplayObject1->tell(OmniCursor);//tell QuickHaptics about the cursor
-	if(twoOmnis){
-	    OmniCursor2 = new Cursor();//Declare a new cursor
-	    OmniCursor2->setName("OmniCursor2");
-	    DisplayObject1->tell(OmniCursor2);//tell QuickHaptics about the cursor
-	}
+    DisplayObject->tell(descriptionText4);
 
-	DisplayObject1->preDrawCallback(GraphicsCallback);//set the graphics callback
-  //  OmniSpace->motionCallback(MotionCallback, Maze);//set the movement callback (contact walls, TODO)
-	// TODO
-	//OmniSpace->startServoLoopCallback(startEffectCB, computeForceCB, stopEffectCB, &dataObject);
+    DisplayObject->preDrawCallback(GraphicsCallback);//Register the graphics callback
+    OmniSpace->startServoLoopCallback(startEffectCB, computeForceCB, stopEffectCB,&dataObject);//Register the servoloop callback
+
+	//
+	// Change the default camera, first set the Default Camera, 
+	// then read back the fov, eye point etc.
+	//
 
     float FOV1, FOV2, FOV3;
     float NearPlane1, NearPlane2, NearPlane3;
@@ -307,10 +226,8 @@ int WINAPI WinMain(	HINSTANCE	hInstance,				// Instance
     hduVector3Dd LookAt1, LookAt2, LookAt3;
     hduVector3Dd UpVector1, UpVector2, UpVector3;
   
-    
-    DisplayObject1->setDefaultCamera();
-    DisplayObject1->getCamera(&FOV1,&NearPlane1,&FarPlane1,&Eye1,&LookAt1,&UpVector1);
-
+    DisplayObject->setDefaultCamera();
+    DisplayObject->getCamera(&FOV1,&NearPlane1,&FarPlane1,&Eye1,&LookAt1,&UpVector1);
     
     FOV3 = FOV2 = FOV1;
     NearPlane3 = NearPlane2 = NearPlane1;
@@ -326,65 +243,70 @@ int WINAPI WinMain(	HINSTANCE	hInstance,				// Instance
     DisplayObject2->setCamera(FOV2, NearPlane2-70, FarPlane2+70, Eye2, LookAt2, UpVector2);
     DisplayObject3->setCamera(FOV3, NearPlane3, FarPlane3, Eye3, LookAt3, UpVector3);
   
-	myFile.open("test.txt");
-//	myFile << "File Opened" << std::endl ;
-	qhStart();//Set everything in motion
-//	myFile << "File Closed" << std::endl ;
+    dataObject.Model->setHapticVisibility(true);
+    dataObject.Model->setGraphicVisibility(true);
+	SimpleBox->setHapticVisibility(true);
+	SimpleBox->setGraphicVisibility(false);
+
+//c  A-MAZE-ING ROUTINE (MAIN)
+	qhStart();
+
+//c  MAIN ROUTINE ENDS, CLOSE FILE
 	myFile.close();
+	MessageBox(NULL, L"Trial Concluded!", L"Success", MB_OK);
 }
 
+//
+// The Graphics Callback runs in the application "client thread" (qhStart) and sets the transformations
+// for the Red Sphere and Green Line of the Cursor. Also, this callback sets the WorldToDevice matrix
+// for use in the ServoLoopCallback.
+//
 void GraphicsCallback(void)
 {
-	// There's this timer, which is a bit of a hack job and is fairly inaccurate.
-	// The servo callback needs to be active, which calls at a nearly precise 1kHz freq.
-	// The beginnings of this are noted with "TODO" in the code above.
-	// See p. 53 (2-27 Example 7) in the Programmer's Guide for a proper implementation.
-	i++;
-	Cursor* OmniCursorPointer = Cursor::searchCursor("OmniCursor");//Search for the cursor and return a pointer to it.
-	Cursor* OmniCursorPointer2;
-	if(twoOmnis){
-		OmniCursorPointer2 = Cursor::searchCursor("OmniCursor2");//Search for the cursor and return a pointer to it.
-	}
-	//DeviceSpace* SpacePointer = DeviceSpace::searchSpace("Default PHANToM");//Search for the haptic device and return a pointer to it.
-	DeviceSpace* SpacePointer = DeviceSpace::searchSpace("right");//Search for the haptic device and return a pointer to it.
-	if(twoOmnis){
-		DeviceSpace* SpacePointer2 = DeviceSpace::searchSpace("left");//Search for the haptic device and return a pointer to it.
-	}
-	Text* TextPointer = Text::searchText("TextBox");
-	Text* TimerPointer = Text::searchText("TimerBox");
+	QHWin32* localDisplayObject = QHWin32::searchWindow("GRACEFUL AMAZING");//Get a Pointer to the display object
+    Cursor* localDeviceCursor = Cursor::searchCursor("devCursor");//Get a pointer to the cursor
+    Cylinder* localForceArrow = Cylinder::searchCylinder("forceArrow");//get a pointer to the cylinder
+    Cone* localForceArrowTip = Cone::searchCone("forceArrowTip");//get a pointer to the cylinder
+	Sphere* localCursorSphere = Sphere::searchSphere("cursorSphere");//get a pointer top the Sphere
+	TriMesh* localMazeModel = TriMesh::searchTriMesh("Maze");
+	if( localDisplayObject == NULL || localDeviceCursor == NULL || localForceArrow == NULL || localCursorSphere == NULL)
+		return;
+
+	hduVector3Dd localCursorPosition1;
+	hduVector3Dd localCursorPosition2;
+    Cursor* localDeviceCursor1 = Cursor::searchCursor("devCursor");//Get a pointer to the cursor
+    Cursor* localDeviceCursor2 = Cursor::searchCursor("devCursor2");//Get a pointer to the cursor
+    localCursorPosition1 = localDeviceCursor1->getPosition();//Get the local cursor position in World Space
+    localCursorPosition2 = localDeviceCursor2->getPosition();//Get the local cursor position in World Space
 
 	hduVector3Dd CPosition;
 	hduVector3Dd C2Position;
-	CPosition = OmniCursorPointer->getPosition();//Get the current position of the haptic device
-	if(twoOmnis){
-		C2Position = OmniCursorPointer2->getPosition();//Get the current position of the haptic device
-	}
+	CPosition = localDeviceCursor1->getPosition();//Get the current position of the haptic device
+	C2Position = localDeviceCursor2->getPosition();//Get the current position of the haptic device
 
-	hduVector3Dd Force = SpacePointer->getForce();//Get the current force being exerted by the haptic device.
-	hduVector3Dd Tracker;
+	int PosX = C2Position[0]/20;
+	int PosY = C2Position[1]/20;
+	int PosZ = C2Position[2]/20+5;
 
-	int PosX = CPosition[0]/20;
-	int PosY = CPosition[1]/20+2;
-	int PosZ = CPosition[2]/20+2;
-	
 	double FinePosX1 = CPosition[0]; // TODO WHY IS THIS RANGE DIFFERENT?!
 	double FinePosY1 = CPosition[1];
 	double FinePosZ1 = CPosition[2];
 
-	double FinePosX2;
-	double FinePosY2;
-	double FinePosZ2;
-	if(twoOmnis){
-		FinePosX2 = C2Position[0];
-		FinePosY2 = C2Position[1];
-		FinePosZ2 = C2Position[2];
-	}
+	double FinePosX2 = C2Position[0];
+	double FinePosY2 = C2Position[1];
+	double FinePosZ2 = C2Position[2];
 
-	if(twoOmnis){
-		myFile << " " << std::setw(10) << FinePosX2 << " " << std::setw(10) << FinePosY2 << " " << std::setw(10) << FinePosZ2 ;
-	}
-	myFile << std::setw(10) << i << " " << std::setw(10) << FinePosX1 << " " << std::setw(10) << FinePosY1 << " " << std::setw(10) << FinePosZ1;
+	if ((FinePosX1==FinePosX2)&&(FinePosY1==FinePosY2)) { baddata = 1; } else { baddata = 0; }
+
+	if ((word < minDTF)&&(word!=-1)&&(dataStage==1)&&(baddata==0)) minDTF=word;
+
+	if (baddata==0)
+	{
+	myFile << std::setw(10) << trialTimer << " " << std::setw(10) << word;
+	myFile << " " << std::setw(10) << minDTF << " " << std::setw(10) << FinePosX1 << " " << std::setw(10) << FinePosY1 << " " << std::setw(10) << FinePosZ1;
+	myFile << " " << std::setw(10) << FinePosX2 << " " << std::setw(10) << FinePosY2 << " " << std::setw(10) << FinePosZ2 ;
 	myFile << std::endl;
+	}
 
 	const int dist[7][3][5] = { { { 14, 13, 12, 11, 10}, { -1, -1, -1, -1,  9}, { 36, 35, 34, -1,  8} },
 							    { { -1, -1, 13, -1, -1}, { -1, -1, -1, -1, -1}, { -1, -1, 33, -1,  7} },
@@ -394,6 +316,93 @@ void GraphicsCallback(void)
 							    { { -1, -1, 21, -1, -1}, { -1, -1, -1, -1, -1}, { 27, -1, -1, -1,  3} },
 							    { { 24, 23, 22, -1,  0}, { 25, -1, -1, -1,  1}, { 26, 27, 28, -1,  2} } };
 
+	if ((PosX > -1) & (PosX < 7) & (PosY > -1) & (PosY < 3) & (PosZ > -1) & (PosZ < 5))
+	{
+		word = dist[PosX][PosY][PosZ];
+	}
+	else
+	{
+		word = -1;
+	}
+	std::stringstream strs;
+	std::stringstream stri;
+	strs << PosX << " " << PosY << " " << PosZ << " - " << word;
+	stri << 0;
+	std::string temp_str = strs.str();
+	std::string timer_str = stri.str();
+	char* pchar = (char*) temp_str.c_str();
+	char* tchar = (char*) timer_str.c_str();
+
+	Text* TextPointer = Text::searchText("TextBox");
+	Text* TimerPointer = Text::searchText("TimerBox");
+	TextPointer->update(pchar,0.45,0.3);	
+	TimerPointer->update(tchar,0.45,0.2);
+
+	hduMatrix CylinderTransform;//Transformation for the Cylinder. This transform makes it point toward the Model
+	hduVector3Dd localCursorPosition;
+	hduVector3Dd DirectionVecX;
+	hduVector3Dd PointOnPlane;
+	hduVector3Dd DirectionVecY;
+	hduVector3Dd DirectionVecZ;
+
+	//Compute the world to device transform
+    WorldToDevice = localDisplayObject->getWorldToDeviceTransform();
+
+	// Set transform for Red Sphere
+    localCursorPosition = localDeviceCursor->getPosition();//Get the local cursor position in World Space
+	
+	hduVector3Dd localCursorSpherePos = localCursorSphere->getTranslation();
+	localCursorSphere->setTranslation(-localCursorSpherePos);
+	localCursorSphere->setTranslation(localCursorPosition);//Set the position of the Sphere the same as the cursor
+    
+	////////////////////////////////////////////////////////////////////////////////////////////
+	//Code to calculate the transform of the green cylinder to point along the force direction
+	////////////////////////////////////////////////////////////////////////////////////////////
+	
+	hduMatrix DeviceToWorld = WorldToDevice.getInverse();
+	HDdouble ForceMagnitude = forceVec.magnitude();
+	DeviceToWorld[3][0] = 0.0;
+	DeviceToWorld[3][1] = 0.0;	
+	DeviceToWorld[3][2] = 0.0;
+	DirectionVecX = forceVec * DeviceToWorld;
+    DirectionVecX.normalize();
+    PointOnPlane.set(0.0,0.0,(DirectionVecX[0]*localCursorPosition[0] + DirectionVecX[1]*localCursorPosition[1] + DirectionVecX[2]*localCursorPosition[2])/DirectionVecX[2]);
+    DirectionVecY = PointOnPlane  - localCursorPosition;
+    DirectionVecY.normalize();
+
+	/////////////////////////////////////////////
+}
+
+
+/***************************************************************************************
+ Servo loop thread callback.  Computes a force effect. This callback defines the motion
+ of the purple skull and calculates the force based on the "real-time" Proxy position
+ in Device space
+****************************************************************************************/
+void HLCALLBACK computeForceCB(HDdouble force[3], HLcache *cache, void *userdata)
+{
+
+	hduVector3Dd localCursorPosition1;
+	hduVector3Dd localCursorPosition2;
+    Cursor* localDeviceCursor1 = Cursor::searchCursor("devCursor");//Get a pointer to the cursor
+    Cursor* localDeviceCursor2 = Cursor::searchCursor("devCursor2");//Get a pointer to the cursor
+    localCursorPosition1 = localDeviceCursor1->getPosition();//Get the local cursor position in World Space
+    localCursorPosition2 = localDeviceCursor2->getPosition();//Get the local cursor position in World Space
+	TriMesh* damnMaze = TriMesh::searchTriMesh("Maze");
+	Box* wooBox = Box::searchBox("WOO");
+	// TODO Check for left-hand inconsistency
+	DeviceSpace* SpacePointer = DeviceSpace::searchSpace((char*)strongHand);//Search for the haptic device and return a pointer to it.
+	DeviceSpace* SpacePointer2 = DeviceSpace::searchSpace((char*)weakHand);//Search for the haptic device and return a pointer to it.
+	
+	hduVector3Dd CPosition;
+	hduVector3Dd C2Position;
+	CPosition = localDeviceCursor1->getPosition();//Get the current position of the haptic device
+	C2Position = localDeviceCursor2->getPosition();//Get the current position of the haptic device
+	
+	hduVector3Dd Force = SpacePointer->getForce();//Get the current force being exerted by the haptic device.
+	hduVector3Dd Tracker;
+	hduVector3Dd HomingPigeon;
+
 	const int hint[7][3][5] = { { {  2,  2,  2,  2,  8}, { -1, -1, -1, -1,  8}, {  2,  2, 32, -1, 32} },
 							    { { -1, -1, 16, -1, -1}, { -1, -1, -1, -1, -1}, { -1, -1, 32, -1, 32} },
 							    { { 32, -1, 16,  1,  1}, {  4, -1, -1, -1, -1}, {  4, -1, 32, -1, 32} },
@@ -401,16 +410,184 @@ void GraphicsCallback(void)
 							    { {  8, -1,  2,  2, 16}, {  8, -1, -1, -1, -1}, { 32,  1,  1, -1, 32} },
 							    { { -1, -1, 16, -1, -1}, { -1, -1, -1, -1, -1}, { 32, -1, -1, -1, 32} },
 							    { {  2,  2, 16, -1,  0}, {  4, -1, -1, -1,  0}, {  4,  1,  1, -1,  4} } };
-/* 128 = START
-    64 = FINISH
-    32 = X+ (RIGHT)
-    16 = X-
-     8 = Y+ (FRONT)
-     4 = Y-
-     2 = Z+ (DOWN)
-     1 = Z-  */
+/* 128 = START    64 = FINISH    32 = X+ (RIGHT)    16 = X-     8 = Y+ (FRONT)     4 = Y-     2 = Z+ (DOWN)     1 = Z-  */
+
+	int PosX = C2Position[0]/20;
+	int PosY = C2Position[1]/20;
+	int PosZ = C2Position[2]/20+5;
 	
-/* BLOCK OLD
+	double FinePosX1 = CPosition[0]; // TODO WHY IS THIS RANGE DIFFERENT?!
+	double FinePosY1 = CPosition[1];
+	double FinePosZ1 = CPosition[2];
+
+	double FinePosX2 = C2Position[0];
+	double FinePosY2 = C2Position[1];
+	double FinePosZ2 = C2Position[2];
+
+	if ((FinePosX1==FinePosX2)&&(FinePosY1==FinePosY2)) { baddata = 1; } else { baddata = 0; }
+	
+//c  DRAG OMNI INTO BOX
+	HomingPigeon[0] = 0;
+	HomingPigeon[1] = 0;
+	HomingPigeon[2] = 0;
+
+			if ((dataStage == -5) && ((FinePosX2<5) || (FinePosX2>15) || (FinePosY2<45) || (FinePosY2>55) || (FinePosZ2<-95) || (FinePosZ2>-85)))
+			{
+				damnMaze->setShapeColor(0.5, 0, 0);
+				damnMaze->setHapticVisibility(false);
+				HomingPigeon[0] = 0.004*(10-FinePosX2);
+				HomingPigeon[1] = 0.004*(50-FinePosY2);
+				HomingPigeon[2] = 0.004*(-90-FinePosZ2);
+			}
+			else if ((dataStage == -5)&&(baddata==0))
+			{
+				damnMaze->setHapticVisibility(true);
+				dataStage++;
+				damnMaze->setShapeColor(0.5, 0.5, 0);
+			}
+			else if ((dataStage == 0)&&((PosX != 0) || (PosY != 2) || (PosZ != 0))&&(baddata==0))
+			{
+					dataStage = 1;
+					damnMaze->setShapeColor(0, 0, 0);
+
+			}
+			else if ((dataStage == 1)&&(baddata==0))
+			{
+				trialTimer++;
+				if ((feedbackMethod==1)&&(baddata==0)){
+					hdBeginFrame(hdGetCurrentDevice());
+					int hintForce;
+					if ((PosX > -1) & (PosX < 7) & (PosY > -1) & (PosY < 3) & (PosZ > -1) & (PosZ < 5))
+					{
+						hintForce = hint[PosX][PosY][PosZ];
+					}
+					else
+					{
+						hintForce = -1;
+					}
+					hduVector3Dd f(0,0.4,0);
+					switch(hintForce){
+						case 1:
+							f[0] = 0;
+							f[1] = 0  + 0.3;
+							f[2] = -1.3;
+							break;
+						case 2:
+							f[0] = 0;
+							f[1] = 0  + 0.3;
+							f[2] = 1.3;
+							break;
+						case 4:
+							f[0] = 0;
+							f[1] =-0.7  + 0.4;
+							f[2] = 0;
+						break;
+						case 8:
+							f[0] = 0;
+							f[1] = 0.7  + 0.4;
+							f[2] = 0;
+							break;
+						case 16:
+							f[0] = -0.7 * (mirror-0.5)*(-2);
+							f[1] = 0  + 0.4;
+							f[2] = 0;
+							break;
+						case 32:
+							f[0] = 0.7 * (mirror-0.5)*(-2);
+							f[1] = 0  + 0.4;
+							f[2] = 0;
+							break;
+						default:
+							f[0] = 0;
+							f[1] = 0  + 0.4;
+							f[2] = 0;
+					}
+					hdSetDoublev(HD_CURRENT_FORCE, f);
+					hdEndFrame(hdGetCurrentDevice());
+				}
+				else if ((feedbackMethod == 2)&&(baddata==0)){
+					// TODOO
+					hdBeginFrame(hdGetCurrentDevice());
+					int hintForce;
+					if ((PosX > -1) & (PosX < 7) & (PosY > -1) & (PosY < 3) & (PosZ > -1) & (PosZ < 5))
+					{
+						hintForce = hint[PosX][PosY][PosZ];
+					}
+					else
+					{
+						hintForce = -1;
+					}
+					impulseTimer++;
+					hduVector3Dd X(-FinePosX1 + 70,-FinePosY1 + 10,-FinePosZ1 - 100);
+					double ka = kOn;
+					if (impulseTimer<impulseOnPeriod){
+						switch(hintForce){
+							case 1:
+								X[2] = X[2]-impulseDistance;
+								break;
+							case 2:
+								X[2] = X[2]+impulseDistance;
+								break;
+							case 4:
+								X[1] = X[1]-impulseDistance;
+								break;
+							case 8:
+								X[1] = X[1]+impulseDistance;
+								break;
+							case 16:
+								X[0] = X[0]-impulseDistance;
+								break;
+							case 32:
+								X[0] = X[0]+impulseDistance;
+								break;
+							default:
+ 								X[0] = 0;
+								X[1] = 0;
+								X[2] = 0;
+						}
+					} else {
+						ka = kOff;
+						if (impulseTimer>=impulsePeriod){
+							impulseTimer = 0;
+						}
+					}
+					hduVector3Dd f(ka*X[0],ka*X[1]+0.4,ka*X[2]);
+					hdSetDoublev(HD_CURRENT_FORCE, f);
+					hdEndFrame(hdGetCurrentDevice());
+				}
+				if ((PosX == 6) && (PosY == 0) && (PosZ == 4) && (baddata==0))
+				{
+					dataStage = 2;
+					damnMaze->setShapeColor(0, 1, 0);
+					//damnMaze->setHapticVisibility(false);
+					//wooBox->setHapticVisibility(false);
+				}
+			}
+
+
+	//	SpacePointer2->setConstantForce(HomingPigeon,-2);
+/*	hduVector3Dd DEBUG;
+	DEBUG[0]=0;
+	DEBUG[1]=0;
+	DEBUG[2]=0;
+	SpacePointer->setConstantForce(DEBUG,0);*/
+	SpacePointer2->setConstantForce(HomingPigeon,1);
+//	SpacePointer->setConstantForce(DEBUG,2);
+//	SpacePointer2->setConstantForce(DEBUG,0);
+		
+//	myFile << " " << std::setw(10) << FinePosX2 << " " << std::setw(10) << FinePosY2 << " " << std::setw(10) << FinePosZ2 ;
+//	myFile << std::setw(10) << i << " " << std::setw(10) << FinePosX1 << " " << std::setw(10) << FinePosY1 << " " << std::setw(10) << FinePosZ1;
+//	myFile << std::endl;
+
+	
+//c   TRACK DTF  [DISTANCE TO FINISH]
+	const int dist[7][3][5] = { { { 14, 13, 12, 11, 10}, { -1, -1, -1, -1,  9}, { 36, 35, 34, -1,  8} },
+							    { { -1, -1, 13, -1, -1}, { -1, -1, -1, -1, -1}, { -1, -1, 33, -1,  7} },
+							    { { 32, -1, 14, 15, 16}, { 33, -1, -1, -1, -1}, { 34, -1, 32, -1,  6} },
+							    { { 31, -1, -1, -1, 17}, { -1, -1, -1, -1, -1}, { -1, -1, 31, -1,  5} },
+							    { { 30, -1, 20, 19, 18}, { 29, -1, -1, -1, -1}, { 28, 29, 30, -1,  4} },
+							    { { -1, -1, 21, -1, -1}, { -1, -1, -1, -1, -1}, { 27, -1, -1, -1,  3} },
+							    { { 24, 23, 22, -1,  0}, { 25, -1, -1, -1,  1}, { 26, 27, 28, -1,  2} } };
 	int word;
 	if ((PosX > -1) & (PosX < 7) & (PosY > -1) & (PosY < 3) & (PosZ > -1) & (PosZ < 5))
 	{
@@ -423,104 +600,133 @@ void GraphicsCallback(void)
 	std::stringstream strs;
 	std::stringstream stri;
 	strs << PosX << " " << PosY << " " << PosZ << " - " << word;
-	stri << (i*5);
+	stri << 0;
 	std::string temp_str = strs.str();
 	std::string timer_str = stri.str();
 	char* pchar = (char*) temp_str.c_str();
 	char* tchar = (char*) timer_str.c_str();
-	TextPointer->update(pchar);	
-	TimerPointer->update(tchar);
-	if(hintsEnabled){
-	int hintForce;
-	if ((PosX > -1) & (PosX < 7) & (PosY > -1) & (PosY < 3) & (PosZ > -1) & (PosZ < 5))
-	{
-		hintForce = hint[PosX][PosY][PosZ];
-	}
-	else
-	{
-		hintForce = -1;
-	}
-	
-	switch(hintForce){
-		case 1:
-			Tracker[0] = 0;
-			Tracker[1] = 0  + 0.5;
-			Tracker[2] = -1;
-			break;
-		case 2:
-			Tracker[0] = 0;
-			Tracker[1] = 0  + 0.5;
-			Tracker[2] = 1;
-			break;
-		case 4:
-			Tracker[0] = 0;
-			Tracker[1] = -1  + 0.5;
-			Tracker[2] = 0;
-			break;
-		case 8:
-			Tracker[0] = 0;
-			Tracker[1] = 1  + 0.5;
-			Tracker[2] = 0;
-			break;
-		case 16:
-			Tracker[0] = -1;
-			Tracker[1] = 0  + 0.5;
-			Tracker[2] = 0;
-			break;
-		case 32:
-			Tracker[0] = 1;
-			Tracker[1] = 0  + 0.5;
-			Tracker[2] = 0;
-			break;
-		default:
-			Tracker[0] = 0;
-			Tracker[1] = 0  + 0.5;
-			Tracker[2] = 0;
-	}
-	SpacePointer->setConstantForce(Tracker, 0.3);
-	}
-	// select hint
-	//   find a good binary-based selection online. (Char?) Can start w/ n-128 and n-64 to start, and later do diagonals
-	// end select
-	/* ROUGH HINT SNIPPET BELOW (TODO)
-	double magn=0.6;
-	Force[0]=0.7;
-	Force[1]=0.0;
-	Force[2]=0.0;
-	SpacePointer->setConstantForce(Force, magn);
-	// (dir,magn);
-    // */
 
-	 /* TODO Attempt to follow position
-	// Is there a different position vector for just the Omni in QuickHaptics???
-	Tracker[0]=FinePosX2-FinePosX1;
-	Tracker[1]=FinePosY2-FinePosY1;
-	Tracker[2]=FinePosZ2-FinePosZ1;
 
-	double magn = 0.05*pow((pow((double)Tracker[0],2)+pow((double)Tracker[1],2)+pow((double)Tracker[2],2)),0.5);
-	strs << ":" << Tracker[0] << " " << Tracker[1] << " " << Tracker[2];
-	temp_str = strs.str();
-	pchar = (char*) temp_str.c_str();
-	TextPointer->update(pchar);	
+	DataTransportClass *localdataObject = (DataTransportClass *) userdata;//Typecast the pointer passed in appropriately
+
+	hduVector3Dd skullPositionDS;//Position of the skull (Moving sphere) in Device Space.
+	hduVector3Dd proxyPosition;//Position of the proxy in device space
+	HDdouble instRate = 0.0;
+	HDdouble deltaT = 0.0;
+	static float counter = 0.0;
+	static int counter1 = 0;
+
+    // Get the time delta since the last update.
+    hdGetDoublev(HD_INSTANTANEOUS_UPDATE_RATE, &instRate);
+    deltaT = 1.0 / instRate;
+    counter+=deltaT;
 	
-	SpacePointer->setConstantForce(Tracker, 0.6);
-	// */
+//	hduVector3Dd ModelPos = localdataObject->Model->getTranslation();
 
-/* BLOCK OLD
+    WorldToDevice.multVecMatrix(localdataObject->Model->getTranslation(),skullPositionDS);//Convert the position of the sphere from world space to device space
+
+	hlCacheGetDoublev(cache, HL_PROXY_POSITION, proxyPosition);//Get the position of the proxy in Device Coordinates (All HL commands in the servo loop callback fetch values in device coordinates)
+    proxyPosition[0]=proxyPosition[0]-10;
+    proxyPosition[1]=proxyPosition[1]+10;
+    proxyPosition[2]=proxyPosition[2]+20;
+	forceVec = forceField(proxyPosition, skullPositionDS, 40.0, 5.0);//Calculate the force
+// TODO
+
+	forceVec[0]=0.0*(localCursorPosition2[0]-localCursorPosition1[0]);
+	forceVec[1]=0.0*(localCursorPosition2[1]-localCursorPosition1[1]);
+	forceVec[2]=0.0*(localCursorPosition2[2]-localCursorPosition1[2]);
+
+    counter1++;
+    if(counter1>2000)//Make the force start after 2.0 seconds of program start. This is because the servo loop thread executes before the graphics thread. 
+		//Hence global variables set in the graphics thread will not be valid for sometime in the begining og the program
+    {
+		force[0] = 0.1*HomingPigeon[0];
+		force[1] = 0.1*HomingPigeon[1];
+		force[2] = 0.1*HomingPigeon[2];
+		if (((dataStage > 1) && (dataStage < 10)) || ((dataStage < 0)&&(dataStage > -5)))
+		{
+			signTimer++;
+			if (signTimer<=40)
+			{
+				force[1] = 4*(((double)signTimer/2)-(signTimer/2))-1;
+   				force[1] = 2*force[1];
+			}
+			else if (signTimer>100)
+			{
+				signTimer = 0;
+				dataStage++;
+			}
+		}
+
+        counter1 = 2001;
 	}
-
-/*
-void MotionCallback(unsigned int ShapeID)
-{
-    //Cursor* OmniCursorPointer = Cursor::searchCursor("OmniCursor");//Search for the cursor and return a pointer to it.
-    //Cursor* OmniCursorPointer2 = Cursor::searchCursor("OmniCursor2");//Search for the cursor and return a pointer to it.
-	//DeviceSpace* SpacePointer = DeviceSpace::searchSpace("Default PHANToM");//Search for the haptic device and return a pointer to it.
-	//DeviceSpace* SpacePointer = DeviceSpace::searchSpace("right");//Search for the haptic device and return a pointer to it.
-	//DeviceSpace* SpacePointer = DeviceSpace::searchSpace("left");//Search for the haptic device and return a pointer to it.
-	
-	//hduVector3Dd CPosition;
-	//CPosition = OmniCursorPointer->getPosition();//Get the current position of the haptic device
-	
-	//hduVector3Dd Force = SpacePointer->getForce();//Get the current force being exerted by the haptic device.
+    else
+    {
+        force[0] = 0.0;
+        force[1] = 0.0;
+        force[2] = 0.0;
+    }
 }
-*/
+
+
+/******************************************************************************
+ Servo loop thread callback called when the effect is started.
+******************************************************************************/
+void HLCALLBACK startEffectCB(HLcache *cache, void *userdata)
+{
+    DataTransportClass *localdataObject = (DataTransportClass *) userdata;
+    printf("Custom effect started\n");
+}
+
+
+/******************************************************************************
+ Servo loop thread callback called when the effect is stopped.
+******************************************************************************/
+void HLCALLBACK stopEffectCB(HLcache *cache, void *userdata)
+{
+    printf("Custom effect stopped\n");
+}
+
+
+/*******************************************************************************
+ Given the position of the two charges in space,
+ calculates the  force.
+*******************************************************************************/
+hduVector3Dd forceField(hduVector3Dd Pos1, hduVector3Dd Pos2, HDdouble Multiplier, HLdouble Radius)
+{
+    hduVector3Dd diffVec = Pos2 - Pos1 ;//Find the difference in position
+    double dist = 0.0;
+    hduVector3Dd forceVec(0,0,0);
+	
+    HDdouble nominalMaxContinuousForce;
+    hdGetDoublev(HD_NOMINAL_MAX_CONTINUOUS_FORCE, &nominalMaxContinuousForce);//Find the max continuous force that the device is capable of
+
+    dist = diffVec.magnitude();
+
+	if(dist < Radius*2.0) //Spring force when the model and cursor are within a 'sphere of influence'
+    {
+        diffVec.normalize();
+        forceVec =  (Multiplier) * diffVec * dist /(4.0 * Radius * Radius);
+        static int i=0;
+    }
+    else //Inverse square attraction
+    {
+        forceVec = Multiplier * diffVec/(dist*dist);
+    }
+
+    for(int i=0;i<3;i++)//Limit force calculated to Max continuous. This is very important because force values exceeding this value can damage the device motors.
+    {
+        if(forceVec[i]>nominalMaxContinuousForce)
+            forceVec[i] = nominalMaxContinuousForce;
+
+        if(forceVec[i]<-nominalMaxContinuousForce)
+            forceVec[i] = -nominalMaxContinuousForce;
+    }
+
+	return forceVec;
+}
+
+
+
+
+
